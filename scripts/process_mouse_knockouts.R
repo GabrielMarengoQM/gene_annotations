@@ -83,6 +83,74 @@ mouse.viability.mgi4 <- mouse.viability.mgi2 %>%
   dplyr::rename(mgi_viability = mp_term_lethal) %>%
   distinct()
 # final = mouse.viability.mgi4
+# MGI Viability - bug fix 22/7/24
+mouse.viability.mgi <- read.fst("./data/raw/mouse.viability.mgi.fst")
+mp.lethal.terms <- read.fst("./data/raw/mouse.lethal.terms.fst")
+
+mp.lethal.terms2 <- mp.lethal.terms %>%
+  dplyr::select(2) %>%
+  dplyr::rename(mp_id = 1)
+
+mouse.viability.mgi2 <- mouse.viability.mgi %>%
+  dplyr::select(7,5) %>%
+  dplyr::rename(mgi_id = "V7", mp_id = "V5") %>%
+  mutate(mp_term_lethal = ifelse(mp_id %in% mp.lethal.terms2$mp_id, "lethal", "viable")) %>%
+  dplyr::select(mgi_id, mp_term_lethal) %>%
+  distinct() %>%
+  left_join(human_mouse_genes)
+
+# genes with no conflicts - viable and lethal
+mouse.viability.mgi3 <- mouse.viability.mgi2 %>%
+  dplyr::select(gene_symbol, mp_term_lethal) %>%
+  distinct() %>%
+  count(gene_symbol) %>%
+  filter(n == 1) %>%
+  pull(gene_symbol)
+
+# genes with evidence for lethality (conflicting)
+mouse.viability.mgi4 <- mouse.viability.mgi2 %>%
+  dplyr::select(gene_symbol, mp_term_lethal) %>%
+  distinct() %>%
+  count(gene_symbol) %>%
+  filter(n > 1) %>%
+  mutate(mp_term_lethal = 'lethal') %>%
+  pull(gene_symbol)
+
+mouse.viability.mgi5 <- mouse.viability.mgi2 %>%
+  dplyr::select(gene_symbol, mp_term_lethal) %>%
+  mutate(mp_term_lethal = ifelse(gene_symbol %in% mouse.viability.mgi4, 'lethal', mp_term_lethal)) %>%
+  distinct()
+
+mouse.viability.mgi4 <- mouse.viability.mgi5
+
+c <- mouse.viability.mgi4 %>%
+  dplyr::count(mp_term_lethal)
+
+# final = mouse.viability.mgi4
+# 6/8/24 - Using mouse genes
+lethal_terms <- mouse.lethal.terms$x
+mouse_proteincoding_genes <- mouse.protein.coding.genes.mgi$`MGI Accession ID`
+mouse.viability.mgi2 <- mouse.viability.mgi %>%
+  select(7,5) %>%
+  distinct() %>%
+  rename(mgi_id = V7, mp_term = V5) %>%
+  filter(mgi_id %in% mouse_proteincoding_genes) %>%
+  mutate(mp_term_lethal = ifelse(mp_term %in% lethal_terms, "y","n")) %>%
+  select(mgi_id, mp_term_lethal) %>%
+  distinct() %>%
+  arrange(mgi_id, mp_term_lethal) %>%
+  group_by(mgi_id) %>%
+  summarise(mgi_lethal_term = paste0(unique(mp_term_lethal), collapse = "|")) %>%
+  mutate(viability_mgi = ifelse(mgi_lethal_term == "n","viable","lethal")) %>%
+  select(mgi_id, viability_mgi) %>%
+  distinct() 
+mouse.viability.mgi3 <- mouse.viability.mgi2 %>% 
+  left_join(human_mouse_genes) %>%
+  filter(!is.na(gene_symbol))
+mouse.viability.mgi4 <- mouse.viability.mgi5
+# final = mouse.viability.mgi4
+# c <- mouse.viability.mgi3 %>%
+#   dplyr::count(viability_mgi)
 
 # Human-Mouse Orthologs ----
 orth.mouse.high.conf <- read.fst("./data/raw/human.mouse.orth.fst")
