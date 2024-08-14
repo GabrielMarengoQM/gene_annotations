@@ -112,7 +112,7 @@ genemap <- read_delim(
   skip = 3
 )
 # Requires new token - go to url and copy paste
-lethal.phenotypes <- fread("https://raw.github.qmul.ac.uk/whri-phenogenomics/catalogue_lethal_genes/master/catalogue_lethal_genes_app/data/omim_curation.tsv?token=GHSAT0AAAAAAAAABL3DJDKHMUZT46MB6XAGZQ6VUJQ")
+lethal.phenotypes <- fread("https://raw.github.qmul.ac.uk/whri-phenogenomics/catalogue_lethal_genes/master/catalogue_lethal_genes_app/data/omim_curation.tsv?token=INSERT_YOUR_TOKEN_HERE")
 # DDG2P
 dd.g2p <- fread(
   "http://ftp.ebi.ac.uk/pub/databases/gene2phenotype/28_07_2023/DDG2P_28_7_2023.csv.gz"
