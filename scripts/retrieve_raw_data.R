@@ -14,7 +14,7 @@
 # !!! Before running !!! 
 # - Check sites and repos for newest release version
 # - Ensure OMIM api key is provided
-api_key <- "kHAELnMKSBmYlctZBHQOpQ"
+api_key <- "INSERT_YOUR_OWN_API_KEY_HERE"
 ## -----------------------------------------------------------------------------
 
 ## -----------------------------------------------------------------------------
