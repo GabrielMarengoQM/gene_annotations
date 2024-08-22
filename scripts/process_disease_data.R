@@ -52,6 +52,29 @@ genemap8 <- genemap_7 %>%
   filter(!is.na(`Approved Gene Symbol`))
 # final = genemap8
 
+# Adding strict mendelian disease flag
+# strict criteria = (1to1 ortholog, not a drug response, non-somatic, molecular basis known)
+one2one_ortholog_genes <- read.fst("./data/raw/orthologs.fst") %>%
+  filter(`Human Support Count Threshold` == 'one-to-one') %>%
+  pull(1)
+
+strict_mendelian_disease_genes <- genemap8 %>%
+  rename(gene_symbol = `Approved Gene Symbol`) %>%
+  filter(!grepl ("somatic", phenotypes)) %>%
+  filter(!grepl ("Somatic", moi)) %>%
+  filter(!grepl ("poor metabolizer", phenotypes)) %>%
+  filter(!grepl ("responsiveness", phenotypes)) %>%
+  filter(number_key == 'The molecular basis for the disorder is known; a mutation has been found in the gene') %>%
+  filter(gene_symbol %in% one2one_ortholog_genes) %>%
+  filter(!is.na(gene_symbol)) %>%
+  pull(1)
+
+genemap8 <- genemap8 %>%
+  mutate(
+    strict_mendelian_disease_gene = if_else(`Approved Gene Symbol` %in% strict_mendelian_disease_genes, "True", "False")
+    )
+
+
 # Lethal phenotypes ----
 lethal.phenotypes <- read.fst("./data/raw/lethal.phenotypes.fst")
 
@@ -75,9 +98,31 @@ lethal.phenotypes <- read.fst("./data/raw/lethal.phenotypes.fst")
 #            TRUE ~ earliest_lethality_category
 #          )) %>%
 #   mutate_all(., ~ ifelse(. == "-", NA, .))
+# lethal.phenotypes2 <- lethal.phenotypes %>%
+#   dplyr::select(
+#     omim_phenotype,
+#     disease_gene_lethal,
+#     earliest_lethality_category
+#   ) %>%
+#   mutate(
+#     earliest_lethality_category = case_when(
+#       is.na(earliest_lethality_category) ~ NA_character_,
+#       earliest_lethality_category == "L1" ~ "Prenatal death; L1",
+#       earliest_lethality_category == "L2" ~ "Neonatal death; L2",
+#       earliest_lethality_category == "L3" ~ "Death in infancy; L3",
+#       earliest_lethality_category == "L4" ~ "Death in childhood; L4",
+#       earliest_lethality_category == "L5" ~ "Death in adolescence; L5",
+#       earliest_lethality_category == "L6" ~ "Death in adulthood; L6",
+#       earliest_lethality_category == "LU" ~ "Not determined; LU",
+#       earliest_lethality_category == "NL" ~ "Non lethal; NL",
+#       TRUE ~ earliest_lethality_category
+#     )) %>%
+#   mutate_all(., ~ ifelse(. == "-", NA, .))
+# fix 14/08/2024
 lethal.phenotypes2 <- lethal.phenotypes %>%
   dplyr::select(
-    omim_phenotype,
+    omim_id,
+    # omim_phenotype,
     disease_gene_lethal,
     earliest_lethality_category
   ) %>%
@@ -94,7 +139,9 @@ lethal.phenotypes2 <- lethal.phenotypes %>%
       earliest_lethality_category == "NL" ~ "Non lethal; NL",
       TRUE ~ earliest_lethality_category
     )) %>%
-  mutate_all(., ~ ifelse(. == "-", NA, .))
+  mutate_all(., ~ ifelse(. == "-", NA, .)) %>%
+  mutate(phenotype_id = as.character(omim_id)) %>%
+  dplyr::select(-omim_id)
 # final = lethal_phenotypes2
 
 # DDG2P ----
