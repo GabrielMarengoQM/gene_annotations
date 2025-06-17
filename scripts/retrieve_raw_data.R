@@ -16,7 +16,7 @@
 # - Run dependencies.R
 # - Check sites and repos for newest release version (IMPC, gnomAD, Lethal phenotypes curation, DDG2P)
 # - Ensure OMIM api key is provided
-api_key <- "M6lwKUenSM2iboieLSku4A"
+api_key <- "API_KEY_HERE"
 ## -----------------------------------------------------------------------------
 
 ## -----------------------------------------------------------------------------
